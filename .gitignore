@@ -4,5 +4,8 @@ node_modules
 .next
 dist
 
+# Rust
+/target
+**/target
 server/target
 contract/target
