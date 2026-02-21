@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use crate::{EventRegistry, EventRegistryClient};
-use soroban_sdk::{testutils::Address as _, Address, Env};
+use soroban_sdk::{testutils::Address as _, testutils::Ledger, Address, Env};
 
 fn create_test_env() -> (Env, EventRegistryClient<'static>, Address, Address, Address) {
     let env = Env::default();

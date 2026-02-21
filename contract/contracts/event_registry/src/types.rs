@@ -117,4 +117,10 @@ pub enum DataKey {
     OrganizerEvents(Address),
     /// The authorized TicketPayment contract address for inventory updates
     TicketPaymentContract,
+    /// Counter for proposal IDs
+    ProposalCounter,
+    /// Mapping of proposal_id to Proposal
+    Proposal(u64),
+    /// List of active proposal IDs
+    ActiveProposals,
 }

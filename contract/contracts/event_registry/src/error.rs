@@ -20,6 +20,16 @@ pub enum EventRegistryError {
     TierNotFound = 14,
     TierSupplyExceeded = 15,
     SupplyUnderflow = 16,
+    ProposalNotFound = 17,
+    ProposalAlreadyExecuted = 18,
+    ProposalExpired = 19,
+    AlreadyApproved = 20,
+    InsufficientApprovals = 21,
+    InvalidThreshold = 22,
+    AdminAlreadyExists = 23,
+    AdminNotFound = 24,
+    CannotRemoveLastAdmin = 25,
+    InvalidProposalType = 26,
 }
 
 impl core::fmt::Display for EventRegistryError {
@@ -59,6 +69,22 @@ impl core::fmt::Display for EventRegistryError {
             EventRegistryError::SupplyUnderflow => {
                 write!(f, "Supply counter underflow")
             }
+            EventRegistryError::ProposalNotFound => write!(f, "Proposal not found"),
+            EventRegistryError::ProposalAlreadyExecuted => write!(f, "Proposal already executed"),
+            EventRegistryError::ProposalExpired => write!(f, "Proposal has expired"),
+            EventRegistryError::AlreadyApproved => write!(f, "Already approved by this admin"),
+            EventRegistryError::InsufficientApprovals => {
+                write!(f, "Insufficient approvals to execute proposal")
+            }
+            EventRegistryError::InvalidThreshold => {
+                write!(f, "Threshold must be greater than 0 and not exceed admin count")
+            }
+            EventRegistryError::AdminAlreadyExists => write!(f, "Admin already exists"),
+            EventRegistryError::AdminNotFound => write!(f, "Admin not found"),
+            EventRegistryError::CannotRemoveLastAdmin => {
+                write!(f, "Cannot remove the last admin")
+            }
+            EventRegistryError::InvalidProposalType => write!(f, "Invalid proposal type"),
         }
     }
 }

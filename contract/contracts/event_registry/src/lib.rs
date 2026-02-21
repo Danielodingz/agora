@@ -1,12 +1,12 @@
 #![no_std]
 
 use crate::events::{
-    AdminAddedEvent, AdminRemovedEvent, AgoraEvent, EventRegisteredEvent, EventStatusUpdatedEvent,
-    FeeUpdatedEvent, InitializationEvent, InventoryIncrementedEvent, MetadataUpdatedEvent,
-    ProposalApprovedEvent, ProposalCreatedEvent, ProposalExecutedEvent, RegistryUpgradedEvent,
-    ThresholdUpdatedEvent,
+    AdminAddedEvent, AdminRemovedEvent, AgoraEvent, EventRegisteredEvent,
+    EventStatusUpdatedEvent, FeeUpdatedEvent, InitializationEvent, InventoryIncrementedEvent,
+    MetadataUpdatedEvent, ProposalApprovedEvent, ProposalCreatedEvent, ProposalExecutedEvent,
+    RegistryUpgradedEvent, ThresholdUpdatedEvent,
 };
-use crate::types::{EventInfo, PaymentInfo, TicketTier};
+use crate::types::{EventInfo, MultiSigConfig, PaymentInfo, Proposal, ProposalType};
 use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, Map, String, Vec};
 
 pub mod error;
@@ -556,8 +556,8 @@ impl EventRegistry {
             return Err(EventRegistryError::Unauthorized);
         }
 
-        let mut proposal =
-            storage::get_proposal(&env, proposal_id).ok_or(EventRegistryError::ProposalNotFound)?;
+        let mut proposal = storage::get_proposal(&env, proposal_id)
+            .ok_or(EventRegistryError::ProposalNotFound)?;
 
         if proposal.executed {
             return Err(EventRegistryError::ProposalAlreadyExecuted);
@@ -606,8 +606,8 @@ impl EventRegistry {
             return Err(EventRegistryError::Unauthorized);
         }
 
-        let mut proposal =
-            storage::get_proposal(&env, proposal_id).ok_or(EventRegistryError::ProposalNotFound)?;
+        let mut proposal = storage::get_proposal(&env, proposal_id)
+            .ok_or(EventRegistryError::ProposalNotFound)?;
 
         if proposal.executed {
             return Err(EventRegistryError::ProposalAlreadyExecuted);
@@ -618,8 +618,8 @@ impl EventRegistry {
             return Err(EventRegistryError::ProposalExpired);
         }
 
-        let config =
-            storage::get_multisig_config(&env).ok_or(EventRegistryError::NotInitialized)?;
+        let config = storage::get_multisig_config(&env)
+            .ok_or(EventRegistryError::NotInitialized)?;
 
         // Check if proposal has sufficient approvals
         if (proposal.approvals.len() as u32) < config.threshold {
@@ -791,10 +791,7 @@ fn validate_metadata_cid(env: &Env, cid: &String) -> Result<(), EventRegistryErr
     Ok(())
 }
 
-fn validate_proposal_type(
-    env: &Env,
-    proposal_type: &ProposalType,
-) -> Result<(), EventRegistryError> {
+fn validate_proposal_type(env: &Env, proposal_type: &ProposalType) -> Result<(), EventRegistryError> {
     match proposal_type {
         ProposalType::SetPlatformWallet(wallet) => validate_address(env, wallet),
         ProposalType::AddAdmin(admin) => {
@@ -811,16 +808,16 @@ fn validate_proposal_type(
                 return Err(EventRegistryError::AdminNotFound);
             }
             // Check if this would remove the last admin
-            let config =
-                storage::get_multisig_config(env).ok_or(EventRegistryError::NotInitialized)?;
+            let config = storage::get_multisig_config(env)
+                .ok_or(EventRegistryError::NotInitialized)?;
             if config.admins.len() <= 1 {
                 return Err(EventRegistryError::CannotRemoveLastAdmin);
             }
             Ok(())
         }
         ProposalType::SetThreshold(threshold) => {
-            let config =
-                storage::get_multisig_config(env).ok_or(EventRegistryError::NotInitialized)?;
+            let config = storage::get_multisig_config(env)
+                .ok_or(EventRegistryError::NotInitialized)?;
             if *threshold == 0 || *threshold > config.admins.len() as u32 {
                 return Err(EventRegistryError::InvalidThreshold);
             }
@@ -830,7 +827,8 @@ fn validate_proposal_type(
 }
 
 fn add_admin_internal(env: &Env, new_admin: &Address) -> Result<(), EventRegistryError> {
-    let mut config = storage::get_multisig_config(env).ok_or(EventRegistryError::NotInitialized)?;
+    let mut config = storage::get_multisig_config(env)
+        .ok_or(EventRegistryError::NotInitialized)?;
 
     // Check if admin already exists
     for admin in config.admins.iter() {
@@ -845,7 +843,8 @@ fn add_admin_internal(env: &Env, new_admin: &Address) -> Result<(), EventRegistr
 }
 
 fn remove_admin_internal(env: &Env, admin_to_remove: &Address) -> Result<(), EventRegistryError> {
-    let mut config = storage::get_multisig_config(env).ok_or(EventRegistryError::NotInitialized)?;
+    let mut config = storage::get_multisig_config(env)
+        .ok_or(EventRegistryError::NotInitialized)?;
 
     // Prevent removing the last admin
     if config.admins.len() <= 1 {
@@ -879,7 +878,8 @@ fn remove_admin_internal(env: &Env, admin_to_remove: &Address) -> Result<(), Eve
 }
 
 fn set_threshold_internal(env: &Env, new_threshold: u32) -> Result<(), EventRegistryError> {
-    let mut config = storage::get_multisig_config(env).ok_or(EventRegistryError::NotInitialized)?;
+    let mut config = storage::get_multisig_config(env)
+        .ok_or(EventRegistryError::NotInitialized)?;
 
     if new_threshold == 0 || new_threshold > config.admins.len() as u32 {
         return Err(EventRegistryError::InvalidThreshold);
