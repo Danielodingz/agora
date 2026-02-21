@@ -1,8 +1,10 @@
 #![no_std]
 
 use crate::events::{
-    AgoraEvent, EventRegisteredEvent, EventStatusUpdatedEvent, FeeUpdatedEvent,
-    InitializationEvent, InventoryIncrementedEvent, MetadataUpdatedEvent, RegistryUpgradedEvent,
+    AdminAddedEvent, AdminRemovedEvent, AgoraEvent, EventRegisteredEvent,
+    EventStatusUpdatedEvent, FeeUpdatedEvent, InitializationEvent, MetadataUpdatedEvent,
+    ProposalApprovedEvent, ProposalCreatedEvent, ProposalExecutedEvent, RegistryUpgradedEvent,
+    ThresholdUpdatedEvent,
 };
 use crate::types::{EventInfo, MultiSigConfig, PaymentInfo, Proposal, ProposalType};
 use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, String, Vec};
