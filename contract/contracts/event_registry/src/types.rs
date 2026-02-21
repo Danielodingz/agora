@@ -16,6 +16,16 @@ pub struct TicketTier {
     pub is_refundable: bool,
 }
 
+/// Represents an early revenue release milestone.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Milestone {
+    /// The number of tickets sold to reach this milestone
+    pub sales_threshold: i128,
+    /// Percentage of the available revenue to release (in basis points, 10000 = 100%)
+    pub release_percent: u32,
+}
+
 /// Represents information about an event in the registry.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -38,6 +48,8 @@ pub struct EventInfo {
     pub max_supply: i128,
     /// Current number of tickets that have been successfully purchased
     pub current_supply: i128,
+    /// Optional milestone plan for early revenue release
+    pub milestone_plan: Option<Vec<Milestone>>,
     /// Map of tier_id to TicketTier for multi-tiered pricing
     pub tiers: Map<String, TicketTier>,
 }
@@ -54,48 +66,17 @@ pub struct PaymentInfo {
     pub tiers: Map<String, TicketTier>,
 }
 
-/// Multi-signature configuration for admin operations
+/// Arguments required to register a new event
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MultiSigConfig {
-    /// List of administrator addresses
-    pub admins: Vec<Address>,
-    /// Number of signatures required to execute a proposal
-    pub threshold: u32,
-}
-
-/// Types of proposed changes that require multi-sig approval
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ProposalType {
-    /// Change the platform wallet address
-    SetPlatformWallet(Address),
-    /// Add a new administrator
-    AddAdmin(Address),
-    /// Remove an existing administrator
-    RemoveAdmin(Address),
-    /// Change the signature threshold
-    SetThreshold(u32),
-}
-
-/// Represents a proposed change awaiting signatures
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Proposal {
-    /// Unique identifier for the proposal
-    pub proposal_id: u64,
-    /// Type of change being proposed
-    pub proposal_type: ProposalType,
-    /// Address that created the proposal
-    pub proposer: Address,
-    /// Addresses that have approved this proposal
-    pub approvals: Vec<Address>,
-    /// Timestamp when proposal was created
-    pub created_at: u64,
-    /// Timestamp when proposal expires (optional)
-    pub expires_at: u64,
-    /// Whether the proposal has been executed
-    pub executed: bool,
+pub struct EventRegistrationArgs {
+    pub event_id: String,
+    pub organizer_address: Address,
+    pub payment_address: Address,
+    pub metadata_cid: String,
+    pub max_supply: i128,
+    pub milestone_plan: Option<Vec<Milestone>>,
+    pub tiers: Map<String, TicketTier>,
 }
 
 /// Storage keys for the Event Registry contract.
