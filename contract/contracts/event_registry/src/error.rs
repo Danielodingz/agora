@@ -77,7 +77,10 @@ impl core::fmt::Display for EventRegistryError {
                 write!(f, "Insufficient approvals to execute proposal")
             }
             EventRegistryError::InvalidThreshold => {
-                write!(f, "Threshold must be greater than 0 and not exceed admin count")
+                write!(
+                    f,
+                    "Threshold must be greater than 0 and not exceed admin count"
+                )
             }
             EventRegistryError::AdminAlreadyExists => write!(f, "Admin already exists"),
             EventRegistryError::AdminNotFound => write!(f, "Admin not found"),
