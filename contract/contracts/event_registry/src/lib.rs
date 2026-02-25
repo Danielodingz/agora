@@ -3,9 +3,9 @@
 use crate::events::{
     AgoraEvent, EventCancelledEvent, EventPostponedEvent, EventRegisteredEvent,
     EventStatusUpdatedEvent, EventsSuspendedEvent, FeeUpdatedEvent, GlobalPromoUpdatedEvent,
-    InitializationEvent, InventoryIncrementedEvent, MetadataUpdatedEvent,
+    GoalMetEvent, InitializationEvent, InventoryIncrementedEvent, MetadataUpdatedEvent,
     OrganizerBlacklistedEvent, OrganizerRemovedFromBlacklistEvent, RegistryUpgradedEvent,
-    ScannerAuthorizedEvent, GoalMetEvent,
+    ScannerAuthorizedEvent,
 };
 use crate::types::{
     BlacklistAuditEntry, EventInfo, EventRegistrationArgs, EventStatus, MultiSigConfig, PaymentInfo,
@@ -455,19 +455,20 @@ impl EventRegistry {
         let new_supply = event_info.current_supply;
 
         // Check if goal met now
-        if !event_info.goal_met && event_info.min_sales_target > 0 {
-            if event_info.current_supply >= event_info.min_sales_target {
-                event_info.goal_met = true;
-                env.events().publish(
-                    (AgoraEvent::GoalMet,),
-                    GoalMetEvent {
-                        event_id: event_id.clone(),
-                        min_sales_target: event_info.min_sales_target,
-                        current_supply: event_info.current_supply,
-                        timestamp: env.ledger().timestamp(),
-                    },
-                );
-            }
+        if !event_info.goal_met
+            && event_info.min_sales_target > 0
+            && event_info.current_supply >= event_info.min_sales_target
+        {
+            event_info.goal_met = true;
+            env.events().publish(
+                (AgoraEvent::GoalMet,),
+                GoalMetEvent {
+                    event_id: event_id.clone(),
+                    min_sales_target: event_info.min_sales_target,
+                    current_supply: event_info.current_supply,
+                    timestamp: env.ledger().timestamp(),
+                },
+            );
         }
 
         storage::update_event(&env, event_info);

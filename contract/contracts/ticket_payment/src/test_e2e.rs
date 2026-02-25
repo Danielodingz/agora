@@ -2,7 +2,9 @@ use super::contract::{event_registry, TicketPaymentContract, TicketPaymentContra
 use super::storage::*;
 use super::types::PaymentStatus;
 use crate::error::TicketPaymentError;
-use soroban_sdk::{testutils::Address as _, testutils::Ledger, token, Address, Env, String, Symbol};
+use soroban_sdk::{
+    testutils::Address as _, testutils::Ledger, token, Address, Env, String, Symbol,
+};
 
 // =============================================================================
 // Mock Registries for E2E tests
@@ -68,6 +70,7 @@ impl MockRegistryE2E {
                         price: 1000_0000000i128,
                         early_bird_price: 1000_0000000i128,
                         early_bird_deadline: 0,
+                        usd_price: 0,
                         tier_limit: 1000,
                         current_sold: 0,
                         is_refundable: true,
@@ -174,6 +177,7 @@ impl MockRegistryCancelledE2E {
                         price: 1000_0000000i128,
                         early_bird_price: 1000_0000000i128,
                         early_bird_deadline: 0,
+                        usd_price: 0,
                         tier_limit: 100,
                         current_sold: 0,
                         is_refundable: false, // not normally refundable, but cancelled overrides
@@ -230,7 +234,7 @@ impl MockRegistryWithGoal {
         let target_deadline: u64 = env.storage().instance().get(&deadline_key).unwrap_or(0);
         let current_supply: i128 = env.storage().instance().get(&supply_key).unwrap_or(0);
         let is_active: bool = env.storage().instance().get(&active_key).unwrap_or(true);
-        
+
         let mut goal_met = false;
         if min_sales_target > 0 && current_supply >= min_sales_target {
             goal_met = true;
@@ -242,9 +246,16 @@ impl MockRegistryWithGoal {
             payment_address: organizer,
             platform_fee_percent: 500,
             is_active,
-            status: if is_active { event_registry::EventStatus::Active } else { event_registry::EventStatus::Inactive },
+            status: if is_active {
+                event_registry::EventStatus::Active
+            } else {
+                event_registry::EventStatus::Inactive
+            },
             created_at: 0,
-            metadata_cid: String::from_str(&env, "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"),
+            metadata_cid: String::from_str(
+                &env,
+                "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+            ),
             max_supply: 100,
             current_supply,
             milestone_plan: None,
@@ -257,6 +268,7 @@ impl MockRegistryWithGoal {
                         price: 1000_0000000i128,
                         early_bird_price: 1000_0000000i128,
                         early_bird_deadline: 0,
+                        usd_price: 0,
                         tier_limit: 1000,
                         current_sold: current_supply,
                         is_refundable: false,
@@ -276,7 +288,9 @@ impl MockRegistryWithGoal {
     pub fn increment_inventory(env: Env, event_id: String, _tier_id: String, quantity: u32) {
         let key = (Symbol::new(&env, "supply"), event_id);
         let current: i128 = env.storage().instance().get(&key).unwrap_or(0);
-        env.storage().instance().set(&key, &(current + quantity as i128));
+        env.storage()
+            .instance()
+            .set(&key, &(current + quantity as i128));
     }
 
     pub fn decrement_inventory(env: Env, event_id: String, _tier_id: String) {
@@ -300,12 +314,18 @@ impl MockRegistryWithGoal {
     }
 
     pub fn set_goal(env: Env, event_id: String, min_target: i128, deadline: u64) {
-        env.storage().instance().set(&(Symbol::new(&env, "min"), event_id.clone()), &min_target);
-        env.storage().instance().set(&(Symbol::new(&env, "deadline"), event_id), &deadline);
+        env.storage()
+            .instance()
+            .set(&(Symbol::new(&env, "min"), event_id.clone()), &min_target);
+        env.storage()
+            .instance()
+            .set(&(Symbol::new(&env, "deadline"), event_id), &deadline);
     }
 
     pub fn set_active(env: Env, event_id: String, is_active: bool) {
-        env.storage().instance().set(&(Symbol::new(&env, "active"), event_id), &is_active);
+        env.storage()
+            .instance()
+            .set(&(Symbol::new(&env, "active"), event_id), &is_active);
     }
 }
 
@@ -884,7 +904,9 @@ fn test_e2e_goal_not_met_blocks_withdrawal() {
     let contract_id = env.register(TicketPaymentContract, ());
     let client = TicketPaymentContractClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
-    let usdc_id = env.register_stellar_asset_contract_v2(Address::generate(&env)).address();
+    let usdc_id = env
+        .register_stellar_asset_contract_v2(Address::generate(&env))
+        .address();
     let platform_wallet = Address::generate(&env);
     let registry_id = env.register(MockRegistryWithGoal, ());
     client.initialize(&admin, &usdc_id, &platform_wallet, &registry_id);
@@ -900,7 +922,15 @@ fn test_e2e_goal_not_met_blocks_withdrawal() {
     fund_buyer(&env, &usdc_id, &buyer, &client.address, amount);
 
     // Buy 1 ticket (goal not met: 1 < 1000)
-    buy_ticket(&client, &env, "pay_g1", "event_goal_1", &buyer, &usdc_id, amount);
+    buy_ticket(
+        &client,
+        &env,
+        "pay_g1",
+        "event_goal_1",
+        &buyer,
+        &usdc_id,
+        amount,
+    );
 
     // Try to withdraw funds - should fail immediately even if active
     let result = client.try_withdraw_organizer_funds(&event_id, &usdc_id);
@@ -915,7 +945,9 @@ fn test_e2e_goal_failed_allows_automated_refund() {
     let contract_id = env.register(TicketPaymentContract, ());
     let client = TicketPaymentContractClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
-    let usdc_id = env.register_stellar_asset_contract_v2(Address::generate(&env)).address();
+    let usdc_id = env
+        .register_stellar_asset_contract_v2(Address::generate(&env))
+        .address();
     let platform_wallet = Address::generate(&env);
     let registry_id = env.register(MockRegistryWithGoal, ());
     client.initialize(&admin, &usdc_id, &platform_wallet, &registry_id);
@@ -931,7 +963,15 @@ fn test_e2e_goal_failed_allows_automated_refund() {
     fund_buyer(&env, &usdc_id, &buyer, &client.address, amount);
 
     // Buy 1 ticket
-    let pay_id = buy_ticket(&client, &env, "pay_f1", "event_goal_fail", &buyer, &usdc_id, amount);
+    let pay_id = buy_ticket(
+        &client,
+        &env,
+        "pay_f1",
+        "event_goal_fail",
+        &buyer,
+        &usdc_id,
+        amount,
+    );
 
     // Set time past deadline
     env.ledger().with_mut(|li| li.timestamp = 2000);
