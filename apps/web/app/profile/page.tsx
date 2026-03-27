@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
@@ -80,7 +81,7 @@ const TicketIcon = () => (
   </svg>
 );
 
-export default function ProfilePage() {
+function ProfileContent() {
   const searchParams = useSearchParams();
   const isEmpty = searchParams.get("empty") === "1";
 
@@ -88,63 +89,71 @@ export default function ProfilePage() {
   const attendedEvents = isEmpty ? [] : ATTENDED_EVENTS;
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#FFFBE9]">
-      <Navbar />
-      <div className="flex-1 w-full max-w-6xl mx-auto px-4 py-10">
-        <div className="flex flex-col md:flex-row gap-8 items-start">
-          <div className="w-full md:w-[28%] md:sticky md:top-24">
-            <ProfileSidebar />
-          </div>
+    <div className="flex-1 w-full max-w-6xl mx-auto px-4 py-10">
+      <div className="flex flex-col md:flex-row gap-8 items-start">
+        <div className="w-full md:w-[28%] md:sticky md:top-24">
+          <ProfileSidebar />
+        </div>
 
-          <div className="flex-1 flex flex-col gap-6">
-            {/* Hosting section */}
-            <section className="bg-white rounded-2xl border border-[#F0EAD6] shadow-sm overflow-hidden">
-              <div className="px-6 pt-6 pb-4 border-b border-[#F0EAD6]">
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">Hosting</h2>
-                <p className="text-sm text-gray-500 mt-0.5">Events you&apos;re organizing</p>
+        <div className="flex-1 flex flex-col gap-6">
+          {/* Hosting section */}
+          <section className="bg-white rounded-2xl border border-[#F0EAD6] shadow-sm overflow-hidden">
+            <div className="px-6 pt-6 pb-4 border-b border-[#F0EAD6]">
+              <h2 className="text-lg font-semibold text-[#1A1A1A]">Hosting</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Events you&apos;re organizing</p>
+            </div>
+            {hostedEvents.length > 0 ? (
+              <div className="p-6 flex flex-col gap-5" data-testid="hosted-events-list">
+                {hostedEvents.map((event) => (
+                  <EventCard key={event.id} {...event} />
+                ))}
               </div>
-              {hostedEvents.length > 0 ? (
-                <div className="p-6 flex flex-col gap-5" data-testid="hosted-events-list">
-                  {hostedEvents.map((event) => (
-                    <EventCard key={event.id} {...event} />
-                  ))}
-                </div>
-              ) : (
-                <div data-testid="hosted-empty-state">
-                  <EmptyState
-                    icon={<CalendarIcon />}
-                    heading="No hosted events yet"
-                    subtext="You haven't created any public events. Start hosting and bring your community together."
-                  />
-                </div>
-              )}
-            </section>
+            ) : (
+              <div data-testid="hosted-empty-state">
+                <EmptyState
+                  icon={<CalendarIcon />}
+                  heading="No hosted events yet"
+                  subtext="You haven't created any public events. Start hosting and bring your community together."
+                />
+              </div>
+            )}
+          </section>
 
-            {/* Attended section */}
-            <section className="bg-white rounded-2xl border border-[#F0EAD6] shadow-sm overflow-hidden">
-              <div className="px-6 pt-6 pb-4 border-b border-[#F0EAD6]">
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">Events</h2>
-                <p className="text-sm text-gray-500 mt-0.5">Events you&apos;ve attended</p>
+          {/* Attended section */}
+          <section className="bg-white rounded-2xl border border-[#F0EAD6] shadow-sm overflow-hidden">
+            <div className="px-6 pt-6 pb-4 border-b border-[#F0EAD6]">
+              <h2 className="text-lg font-semibold text-[#1A1A1A]">Events</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Events you&apos;ve attended</p>
+            </div>
+            {attendedEvents.length > 0 ? (
+              <div className="p-6 flex flex-col gap-5" data-testid="attended-events-list">
+                {attendedEvents.map((event) => (
+                  <EventCard key={event.id} {...event} />
+                ))}
               </div>
-              {attendedEvents.length > 0 ? (
-                <div className="p-6 flex flex-col gap-5" data-testid="attended-events-list">
-                  {attendedEvents.map((event) => (
-                    <EventCard key={event.id} {...event} />
-                  ))}
-                </div>
-              ) : (
-                <div data-testid="attended-empty-state">
-                  <EmptyState
-                    icon={<TicketIcon />}
-                    heading="No events attended yet"
-                    subtext="Nothing here yet. You have no public events at this time."
-                  />
-                </div>
-              )}
-            </section>
-          </div>
+            ) : (
+              <div data-testid="attended-empty-state">
+                <EmptyState
+                  icon={<TicketIcon />}
+                  heading="No events attended yet"
+                  subtext="Nothing here yet. You have no public events at this time."
+                />
+              </div>
+            )}
+          </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <main className="flex flex-col min-h-screen bg-[#FFFBE9]">
+      <Navbar />
+      <Suspense>
+        <ProfileContent />
+      </Suspense>
       <Footer />
     </main>
   );
