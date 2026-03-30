@@ -109,11 +109,9 @@ use crate::types::{SeriesPass, SeriesRegistry};
 
 use crate::error::EventRegistryError;
 
-pub const VERSION: u32 = 1;
-
 const MIN_METADATA_CID_LEN: u32 = 46;
 const MAX_METADATA_CID_LEN: u32 = 100;
-const VERSION: u32 = 1;
+pub const VERSION: u32 = 1;
 
 #[contract]
 pub struct EventRegistry;
